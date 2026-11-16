@@ -87,20 +87,31 @@ Workspace the same way.
 The panel handles the page-to-item workflow. For questions the panel doesn't
 answer ("what's due this week across the board?", "move the gift guide to next
 Friday"), add monday.com's hosted MCP server so the Workspace assistant can use
-it. Open the Skills editor at `https://da.live/apps/skills#/{org}/{site}`, go
-to **MCPs** and add a server:
+it. Where you add it depends on which assistant the site runs:
 
-- **Server ID:** `monday`
-- **Endpoint URL:** `https://mcp.monday.com/mcp`
-- **HTTP header:** `Authorization` = `Bearer {monday.com API token}`
+- **Coworker** (`ew.coworker` = `true` in the `flags` sheet): in
+  [Experience Cloud](https://experience.adobe.com), open **Coworker ›
+  Customizations › Integrations › Add server**, in the same organization as
+  the site.
+- **Classic Workspace assistant:** open the Skills editor at
+  `https://da.live/apps/skills#/{org}/{site}` and go to **MCPs**.
 
-The editor lists the server's tools (107 at the time of writing) once it
-connects, which confirms the token works. Then start a new chat session and ask
-"List my monday.com boards".
+Either way, add:
+
+- **Name:** `monday`
+- **URL:** `https://mcp.monday.com/mcp` (HTTP)
+- **Authentication:** None
+- **Header:** `Authorization` = `Bearer {monday.com API token}`, with a space
+  after `Bearer`. Use **Use a secret** where it's offered.
+
+Once it connects, the server lists its tools (107 at the time of writing).
+Start a **new** chat session and ask "List my monday.com boards".
+
+![The Workspace assistant reading the page's item from monday.com through the MCP server](docs/img/mcp-chat.png)
 
 ![The monday.com MCP server in the Skills editor, with its tools listed](docs/img/mcp-skills.png)
 
-The token is shared: everyone who uses the assistant on the site
+A token in a header is shared: everyone who uses the assistant on the site
 acts as that monday.com user, and site admins can read it in the config. Use a
 dedicated service user for it, not a personal token, outside of demos. See
 [monday.com's MCP docs](https://developer.monday.com/api-reference/docs/mcp-api-token).
