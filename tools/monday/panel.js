@@ -9,6 +9,32 @@ import {
 import { createMondayAdapter } from './api.js';
 
 const POLL_MS = 20000;
+
+/** Spectrum 2 status-light colours per stage; unknown labels fall back to the board's colour. */
+const STAGE_DOTS = {
+  [STAGES.BRIEF]: 'var(--s2-fuchsia-900, #b130bd)',
+  [STAGES.DRAFTING]: 'var(--s2-blue-900, #3b63fb)',
+  [STAGES.REVIEW]: 'var(--s2-orange-700, #e86a00)',
+  [STAGES.CHANGES]: 'var(--s2-red-900, #d73220)',
+  [STAGES.APPROVED]: 'var(--s2-green-700, #0ba45d)',
+  [STAGES.PUBLISHED]: 'var(--s2-green-1000, #03714a)',
+};
+
+/** Spectrum 2 workflow icons (18px), trusted constants only. */
+const ICONS = {
+  more: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="16" cy="10" r="1.6"/></svg>',
+  refresh: '<svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.2 8.3A6.5 6.5 0 1 0 16 13"/><path d="M16.5 3.5v4.8h-4.8"/></svg>',
+  alert: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.2 18.4 17H1.6z" fill="currentColor"/><path d="M10 7.5v4.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14.3" r="1.1" fill="#fff"/></svg>',
+  info: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="currentColor"/><path d="M10 9v5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="6.2" r="1.1" fill="#fff"/></svg>',
+  sparkle: '<svg viewBox="0 0 20 20" aria-hidden="true" fill="currentColor"><path d="M8 2.5l1.3 3.7L13 7.5l-3.7 1.3L8 12.5 6.7 8.8 3 7.5l3.7-1.3zM14.5 11l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>',
+};
+
+function icon(name) {
+  const span = document.createElement('span');
+  span.className = 'mp-icon';
+  span.innerHTML = ICONS[name];
+  return span;
+}
 const TOKEN_HELP = 'https://support.monday.com/hc/en-us/articles/360005144659-Does-monday-com-have-an-API';
 
 export function el(tag, props = {}, ...children) {
@@ -228,7 +254,7 @@ export function mountPanel(root, {
           el('strong', {}, 'Content workflow'),
           el('span', { className: 'mp-sub' }, state.board ? state.board.name : 'monday.com'))),
       state.me && el('details', { className: 'mp-menu' },
-        el('summary', { 'aria-label': 'More' }, '⋯'),
+        el('summary', { 'aria-label': 'More', className: 'nx-action-btn-icon' }, icon('more')),
         el('div', { className: 'mp-menu-list' },
           state.board && el('a', { href: state.board.url, target: '_blank', rel: 'noopener' }, 'Open board in monday.com'),
           el('button', { type: 'button', onClick: () => guard('Loading boards', listBoards) }, 'Switch board'),
@@ -246,9 +272,9 @@ export function mountPanel(root, {
       },
       el('label', { for: 'mp-token' }, 'Personal API token'),
       input = el('input', {
-        id: 'mp-token', type: 'password', autocomplete: 'off', placeholder: 'Paste your token', required: true,
+        id: 'mp-token', className: 'nx-input', type: 'password', autocomplete: 'off', placeholder: 'Paste your token', required: true,
       }),
-      el('button', { type: 'submit', className: 'mp-primary', disabled: Boolean(state.busy) }, state.busy || 'Connect')),
+      el('button', { type: 'submit', className: 'nx-btn-accent', disabled: Boolean(state.busy) }, state.busy || 'Connect')),
       el('p', { className: 'mp-fine' },
         'In monday.com: your avatar › Developers › My access tokens. ',
         el('a', { href: TOKEN_HELP, target: '_blank', rel: 'noopener' }, 'How to find it'),
@@ -273,7 +299,7 @@ export function mountPanel(root, {
       el('ul', { className: 'mp-bullets' }, board.missing.map((m) => el('li', {}, m))),
       el('button', {
         type: 'button',
-        className: 'mp-primary',
+        className: 'nx-btn-accent',
         disabled: Boolean(state.busy),
         onClick: () => guard('Adding columns', async () => {
           const ready = await adapter.prepareBoard(board);
@@ -284,11 +310,9 @@ export function mountPanel(root, {
   }
 
   function stagePill(item) {
-    return el('span', {
-      className: 'mp-pill',
-      style: item.stageColor ? `--pill:${item.stageColor}` : undefined,
-      dataset: { stage: item.stage || 'none' },
-    }, item.stage || 'No stage');
+    const color = STAGE_DOTS[item.stage] ?? item.stageColor ?? '';
+    return el('span', { className: 'mp-status', style: color ? `--dot:${color}` : undefined },
+      el('i', { 'aria-hidden': 'true' }), item.stage || 'No stage');
   }
 
   function dueChip(item) {
@@ -308,16 +332,17 @@ export function mountPanel(root, {
         el('h2', {}, item.name),
         item.owners.length > 0 && el('p', { className: 'mp-fine' }, `Owner: ${item.owners.map((o) => o.name).join(', ')}`),
         gate && el('div', { className: `mp-note ${gate.level}`, role: gate.level === 'error' ? 'alert' : undefined },
-          el('strong', {}, gate.title), ' ', gate.text),
+          el('p', { className: 'mp-note-title' }, icon(gate.level === 'info' ? 'info' : 'alert'), gate.title),
+          el('p', {}, gate.text)),
         el('div', { className: 'mp-actions' },
-          item.brief && (actions.setPrompt || demo) && el('button', { type: 'button', className: 'mp-primary', onClick: () => askAssistant(item) }, 'Draft with assistant'),
-          item.brief && actions.sendHTML && el('button', { type: 'button', onClick: () => insertBrief(item) }, 'Insert brief'),
-          el('a', { className: 'mp-button', href: item.url, target: '_blank', rel: 'noopener' }, 'Open item'))),
+          item.brief && (actions.setPrompt || demo) && el('button', { type: 'button', className: 'nx-btn-accent', onClick: () => askAssistant(item) }, icon('sparkle'), 'Draft with assistant'),
+          item.brief && actions.sendHTML && el('button', { type: 'button', className: 'nx-action-btn', onClick: () => insertBrief(item) }, 'Insert brief'),
+          el('a', { className: 'nx-action-btn', href: item.url, target: '_blank', rel: 'noopener' }, 'Open item'))),
 
       state.promptPreview && el('section', { className: 'mp-card mp-demo' },
         el('h3', {}, 'Sent to the Workspace assistant'),
         el('p', { className: 'mp-brief mp-fine' }, state.promptPreview),
-        el('button', { type: 'button', onClick: () => set({ promptPreview: '' }) }, 'Close')),
+        el('button', { type: 'button', className: 'nx-action-btn nx-btn-sm', onClick: () => set({ promptPreview: '' }) }, 'Close')),
 
       item.brief && el('section', { className: 'mp-card' },
         el('h3', {}, 'Brief'),
@@ -328,7 +353,7 @@ export function mountPanel(root, {
         el('div', { className: 'mp-stages', role: 'group', 'aria-label': 'Content stage' },
           STAGE_ORDER.map((s) => el('button', {
             type: 'button',
-            className: s === item.stage ? 'on' : '',
+            className: `nx-action-btn nx-btn-sm${s === item.stage ? ' on' : ''}`,
             'aria-pressed': String(s === item.stage),
             disabled: Boolean(state.busy),
             onClick: () => s !== item.stage && setStage(s),
@@ -346,8 +371,8 @@ export function mountPanel(root, {
           className: 'mp-comment',
           onSubmit: (e) => { e.preventDefault(); comment(textarea.value); },
         },
-        textarea = el('textarea', { rows: 2, placeholder: 'Reply on monday.com…', 'aria-label': 'Comment' }),
-        el('button', { type: 'submit', disabled: Boolean(state.busy) }, 'Post'))));
+        textarea = el('textarea', { className: 'nx-input mp-textarea', rows: 2, placeholder: 'Reply on monday.com…', 'aria-label': 'Comment' }),
+        el('button', { type: 'submit', className: 'nx-action-btn', disabled: Boolean(state.busy) }, 'Post'))));
   }
 
   function syncLine() {
@@ -364,7 +389,7 @@ export function mountPanel(root, {
       el('section', { className: 'mp-card' },
         el('h2', {}, 'This page has no item yet'),
         el('p', {}, 'Link it to an item on the board, or create one from this page.'),
-        el('button', { type: 'button', className: 'mp-primary', disabled: Boolean(state.busy), onClick: createItem },
+        el('button', { type: 'button', className: 'nx-btn-accent', disabled: Boolean(state.busy), onClick: createItem },
           state.busy === 'Creating' ? 'Creating…' : 'Create item from this page')),
       el('section', { className: 'mp-card' },
         el('h3', {}, 'Link to an existing item'),
@@ -402,15 +427,15 @@ export function mountPanel(root, {
           type: 'button', role: 'tab', 'aria-selected': String(state.tab === 'work'), onClick: () => set({ tab: 'work' }),
         }, 'My work', mineCount ? el('span', { className: 'mp-count' }, mineCount) : null),
         el('button', {
-          type: 'button', className: 'mp-refresh', 'aria-label': 'Refresh', title: 'Refresh', disabled: Boolean(state.busy), onClick: () => guard('Refreshing', refresh),
-        }, '↻')),
+          type: 'button', className: 'nx-action-btn-icon mp-refresh', 'aria-label': 'Refresh', title: 'Refresh', disabled: Boolean(state.busy), onClick: () => guard('Refreshing', refresh),
+        }, icon('refresh'))),
       state.tab === 'page' ? pageTab() : workTab(),
       demo && page.simulate && el('section', { className: 'mp-card mp-demo' },
         el('h3', {}, 'Demo mode'),
         el('p', { className: 'mp-fine' }, 'Sample data, nothing is saved. Simulate what the author does in Workspace:'),
         el('div', { className: 'mp-actions' },
-          el('button', { type: 'button', onClick: () => { page.simulate('preview'); guard('Syncing', refresh); } }, 'Preview the page'),
-          el('button', { type: 'button', onClick: () => { page.simulate('live'); guard('Syncing', refresh); } }, 'Publish the page'))));
+          el('button', { type: 'button', className: 'nx-action-btn', onClick: () => { page.simulate('preview'); guard('Syncing', refresh); } }, 'Preview the page'),
+          el('button', { type: 'button', className: 'nx-action-btn', onClick: () => { page.simulate('live'); guard('Syncing', refresh); } }, 'Publish the page'))));
   }
 
   function render() {
