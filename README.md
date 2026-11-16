@@ -48,12 +48,7 @@ the Workspace assistant can answer questions about the board too:
 
 ![The Workspace assistant reading the page's item from monday.com through the MCP server](docs/img/mcp-chat.png)
 
-For teams on Wrike, Asana or Smartsheet, the panel reaches monday.com through
-one small adapter, so those tools can follow
-([see below](#other-work-management-tools)).
-
-This plugin is not made or endorsed by monday.com. The rest of this README is
-for site admins. Authors can start with the [author guide](docs/authors.md).
+Authors can start with the [author guide](docs/authors.md).
 
 ## Try it without an account
 
@@ -206,6 +201,9 @@ Node.js 20 or later.
 a legal comment, so the review warning shows straight away.
 
 ## Other work-management tools
+
+For teams on Wrike, Asana or Smartsheet, the panel reaches monday.com through
+one small adapter, so those tools can follow
 
 `tools/monday/api.js` is the only file that knows monday.com. It maps boards
 and items into a tool-neutral work item and implements this contract:
