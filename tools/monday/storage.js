@@ -5,7 +5,21 @@
  */
 const PREFIX = 'ew-monday:';
 
-export function browserStorage(store = globalThis.localStorage) {
+/**
+ * The panel's localStorage, or an in-memory store when the browser blocks it
+ * (third-party storage off, sandboxed frame). `persistent` says which one.
+ */
+export function panelStore(win = window) {
+  try {
+    const store = win.localStorage;
+    store.getItem(PREFIX);
+    return { store, persistent: true };
+  } catch {
+    return { store: memoryStore(), persistent: false };
+  }
+}
+
+export function browserStorage(store) {
   const read = (key) => {
     try {
       return JSON.parse(store.getItem(PREFIX + key));

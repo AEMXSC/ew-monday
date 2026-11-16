@@ -146,3 +146,25 @@ test('storage is namespaced and clear() only removes our keys', () => {
   assert.equal(s.token(), null);
   assert.equal(store.getItem('other'), 'keep');
 });
+
+test('comments are sent as escaped HTML with line breaks kept', async () => {
+  const fetch = fakeFetch([{ body: { data: { create_update: { id: '1' } } } }]);
+  await createMondayAdapter({ token: 't', fetch }).addNote('9', 'Use <b>bold</b>\nsecond line');
+  assert.equal(fetch.calls[0].body.variables.t, 'Use &lt;b&gt;bold&lt;/b&gt;<br>second line');
+});
+
+test('owner names stay matched when a team is listed first', () => {
+  const board = describeBoard(rawBoard);
+  const w = toWorkItem({
+    id: 1,
+    name: 'x',
+    column_values: [{ id: 'person', type: 'people', text: 'Brand team, Sam', persons_and_teams: [{ id: 3, kind: 'team' }, { id: 6, kind: 'person' }] }],
+  }, board);
+  assert.deepEqual(w.owners, [{ id: '6', name: 'Sam' }]);
+});
+
+test('a board cut off at the item limit says so', async () => {
+  const page = (cursor) => ({ body: { data: { boards: [{ items_page: { cursor, items: [{ id: 1, name: 'a', column_values: [], updates: [] }] } }] } } });
+  const short = await createMondayAdapter({ token: 't', fetch: fakeFetch([page(null)]) }).items(describeBoard(rawBoard));
+  assert.equal(short.truncated, false);
+});

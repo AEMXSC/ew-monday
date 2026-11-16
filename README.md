@@ -171,15 +171,19 @@ point, so earlier previews don't change the stage.
   the editor does, only to read the page's preview/publish state
   (`admin.hlx.page/status`) and its heading (`admin.da.live/source`). The panel
   never changes the page, except when the author clicks **Insert brief**.
+- **The panel page** has a Content Security Policy: scripts and styles only from
+  its own site and `da.live` (the Workspace SDK and style guide), network only to
+  `api.monday.com`, `admin.hlx.page` and `admin.da.live`. Links from the board
+  open only if they are `http(s)`.
 
 ## Limits
 
-- Status sync runs while the panel is open (on open and every 20 seconds). A
+- Status sync runs while the panel is open (on open and every 30 seconds, backing off when monday.com or Adobe's API fails). A
   page published with the panel closed is synced the next time someone opens
   the panel on it.
 - The panel warns about unapproved pages but cannot block publishing:
   Experience Workspace has no hook for that.
-- Boards are read up to 500 items.
+- Boards are read up to 500 items. On bigger boards the panel won't offer to create an item for an unlinked page, since it could be a duplicate.
 - If the admin status API can't be read for a site, the panel says so and
   authors set the stage by hand.
 - Tested on classic DA sites.
@@ -226,6 +230,7 @@ A Wrike, Asana or Smartsheet adapter with the same methods drops into
 
 ```sh
 npm test            # unit tests (node --test), no install needed
+npm install && npm run lint   # ESLint and Stylelint with the adobe-rnd/ew-extensions config
 npx @adobe/aem-cli up   # serves the panel at http://localhost:3000
 ```
 

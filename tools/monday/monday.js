@@ -6,7 +6,7 @@
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import { mountPanel } from './panel.js';
 import { createPage } from './page.js';
-import { browserStorage } from './storage.js';
+import { browserStorage, memoryStore, panelStore } from './storage.js';
 
 const SDK_TIMEOUT = 3000;
 
@@ -22,8 +22,8 @@ async function init() {
     path: params.get('path') ?? '/',
   };
   const actions = sdk?.actions ?? {};
-  const daFetch = actions.daFetch
-    ?? ((url, opts) => window.fetch(url, { ...opts, headers: { ...(opts?.headers ?? {}), ...(sdk?.token ? { Authorization: `Bearer ${sdk.token}` } : {}) } }));
+  // Outside Workspace there is no signed-in fetch: status reads then fail and the panel says so.
+  const daFetch = actions.daFetch ?? ((url, opts) => window.fetch(url, opts));
 
   let page = createPage({
     org: context.org,
@@ -37,7 +37,6 @@ async function init() {
   let options = {};
   if (demo) {
     const { createDemoAdapter } = await import('./demo-adapter.js');
-    const { memoryStore } = await import('./storage.js');
     if (!page.org) page = { ...page, org: 'demo', site: 'frescopa', path: page.path === '/' ? '/coffee' : page.path };
     const published = { previewAt: null, liveAt: null };
     page = {
@@ -56,9 +55,12 @@ async function init() {
     options = { adapterFactory: () => adapter, storage, demo: true };
   }
 
+  const { store, persistent } = panelStore();
   mountPanel(root, {
-    page, actions, storage: browserStorage(), embedded: Boolean(sdk), ...options,
+    page, actions, storage: browserStorage(store), persistent, embedded: Boolean(sdk), ...options,
   });
 }
 
-init();
+init().catch((e) => {
+  document.getElementById('monday-app').textContent = `The panel could not start: ${e.message}`;
+});

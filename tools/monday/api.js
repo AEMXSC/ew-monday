@@ -12,9 +12,12 @@
  *   updateItem(board, itemId, { stage?, pageUrl?, liveUrl? })
  *   addNote(itemId, text)
  */
-import { STAGES } from './model.js';
+import { STAGES, escapeHtml } from './model.js';
 
 export const ENDPOINT = 'https://api.monday.com/v2';
+
+/** Boards are read up to this many items. */
+export const MAX_ITEMS = 500;
 
 /** Column titles this extension creates when a board doesn't have them. */
 export const COLUMN_TITLES = Object.freeze({
@@ -68,8 +71,8 @@ export function createMondayAdapter({ token, fetch = (...a) => window.fetch(...a
     name: 'monday.com',
 
     async me() {
-      const { me } = await gql('query { me { id name account { slug } } }');
-      return { id: String(me.id), name: me.name, account: me.account?.slug ?? '' };
+      const { me } = await gql('query { me { id name } }');
+      return { id: String(me.id), name: me.name };
     },
 
     async boards() {
@@ -122,7 +125,7 @@ export function createMondayAdapter({ token, fetch = (...a) => window.fetch(...a
                   ... on LinkValue { url }
                   ... on DateValue { date }
                 }
-                updates(limit: 5) { id text_body created_at creator { name } }
+                updates(limit: 20) { id text_body created_at creator { name } }
               }
             }
           }
@@ -131,7 +134,9 @@ export function createMondayAdapter({ token, fetch = (...a) => window.fetch(...a
         if (!page) break;
         out.push(...page.items.map((i) => toWorkItem(i, board)));
         cursor = page.cursor;
-      } while (cursor && out.length < 500);
+      } while (cursor && out.length < MAX_ITEMS);
+      // A board bigger than this may hide the page's item: the panel then won't offer to create a duplicate.
+      out.truncated = Boolean(cursor);
       return out;
     },
 
@@ -154,7 +159,7 @@ export function createMondayAdapter({ token, fetch = (...a) => window.fetch(...a
     async addNote(itemId, text) {
       await gql(`mutation ($i: ID!, $t: String!) {
         create_update(item_id: $i, body: $t) { id }
-      }`, { i: itemId, t: text });
+      }`, { i: itemId, t: escapeHtml(text).replace(/\n/g, '<br>') }); // update bodies are HTML
     },
   };
 }
@@ -162,7 +167,8 @@ export function createMondayAdapter({ token, fetch = (...a) => window.fetch(...a
 /** Pick the columns the workflow needs, by title first, then by type. */
 export function describeBoard(raw) {
   const cols = raw.columns ?? [];
-  const byTitle = (title, type) => cols.find((c) => c.type === type && c.title.trim().toLowerCase() === title.toLowerCase());
+  const byTitle = (title, type) => cols.find((c) => c.type === type
+    && c.title.trim().toLowerCase() === title.toLowerCase());
   const byType = (type, exclude = []) => cols.find((c) => c.type === type && !exclude.includes(c.id));
   const briefCol = cols.find((c) => c.type === 'long_text' && /brief/i.test(c.title)) ?? byType('long_text');
 
@@ -193,8 +199,11 @@ export function toWorkItem(raw, board) {
   const col = (key) => (board.columns[key] ? values[board.columns[key].id] : undefined);
   const stage = col('stage');
   const due = col('due');
-  const owners = col('owner')?.persons_and_teams?.filter((p) => p.kind === 'person') ?? [];
-  const ownerNames = (col('owner')?.text ?? '').split(',').map((s) => s.trim());
+  // The column's text lists people and teams in the same order as persons_and_teams.
+  const names = (col('owner')?.text ?? '').split(',').map((s) => s.trim());
+  const owners = (col('owner')?.persons_and_teams ?? [])
+    .map((p, i) => ({ ...p, name: names[i] ?? '' }))
+    .filter((p) => p.kind === 'person');
   return {
     id: String(raw.id),
     name: raw.name,
@@ -202,7 +211,7 @@ export function toWorkItem(raw, board) {
     stage: stage?.label ?? stage?.text ?? '',
     stageColor: stage?.label_style?.color ?? '',
     due: due?.date ?? dueFromText(due?.text),
-    owners: owners.map((p, i) => ({ id: String(p.id), name: ownerNames[i] ?? '' })),
+    owners: owners.map((p) => ({ id: String(p.id), name: p.name })),
     brief: col('brief')?.text ?? '',
     pageUrl: col('page')?.url ?? '',
     liveUrl: col('live')?.url ?? '',

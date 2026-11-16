@@ -6,8 +6,18 @@ import {
 } from '../tools/monday/model.js';
 
 const item = (extra = {}) => ({
-  id: '1', name: 'World Tour landing page', url: 'https://x.monday.com/boards/1/pulses/1', stage: STAGES.DRAFTING,
-  stageColor: '', due: '', owners: [], brief: '', pageUrl: '', liveUrl: '', updates: [], ...extra,
+  id: '1',
+name: 'World Tour landing page',
+url: 'https://x.monday.com/boards/1/pulses/1',
+stage: STAGES.DRAFTING,
+  stageColor: '',
+due: '',
+owners: [],
+brief: '',
+pageUrl: '',
+liveUrl: '',
+updates: [],
+...extra,
 });
 
 test('edit URLs and page matching survive index pages, .html and trailing slashes', () => {
@@ -111,4 +121,35 @@ test('first sight: an item never synced before has no marker; one synced (even t
   assert.equal(isFirstSight(null), true);
   assert.equal(isFirstSight({ previewAt: null, liveAt: null }), false);
   assert.equal(isFirstSight({ previewAt: '2026-11-16T10:00:00.000Z' }), false);
+});
+
+test('sync: a stale preview never overrides a reviewer, and two browsers never double-write', async () => {
+  const { decideSync: decide } = await import('../tools/monday/model.js');
+  const reviewer = { id: 'r', author: 'Legal', text: 'Remove the claim.', at: '2026-11-16T12:00:00.000Z' };
+  const changes = item({ stage: STAGES.CHANGES, updates: [reviewer] });
+  // Previewed before Legal commented (another author's older preview): leave Changes requested alone.
+  assert.equal(decide(changes, { previewAt: '2026-11-16T11:00:00.000Z' }, { previewAt: '2026-11-16T09:00:00.000Z' }).stage, undefined);
+  // Previewed after the comment: that answers the review.
+  assert.equal(decide(changes, { previewAt: '2026-11-16T13:00:00.000Z' }, { previewAt: '2026-11-16T09:00:00.000Z' }).stage, STAGES.REVIEW);
+  // Someone else's browser already wrote this preview back: only remember it.
+  const noted = item({ updates: [{ id: 's', author: 'A', text: 'Experience Workspace · Ready for review: x', at: '2026-11-16T13:00:05.000Z' }] });
+  assert.equal(decide(noted, { previewAt: '2026-11-16T13:00:00.000Z' }, {}).stage, undefined);
+  const published = item({ stage: STAGES.APPROVED, updates: [{ id: 's', author: 'A', text: 'Experience Workspace · Published: x', at: '2026-11-16T14:00:05.000Z' }] });
+  assert.equal(decide(published, { liveAt: '2026-11-16T14:00:00.000Z' }, {}).stage, undefined);
+});
+
+test('board links: only http(s) becomes a link, and a malformed link never breaks matching', async () => {
+  const { safeUrl, linksToPage: links } = await import('../tools/monday/model.js');
+  assert.equal(safeUrl('https://x.monday.com/boards/1'), 'https://x.monday.com/boards/1');
+  assert.equal(safeUrl(['javascript', 'alert(1)'].join(':')), ''); // built up so the linter doesn't flag the test itself
+  assert.equal(safeUrl('data:text/html,hi'), '');
+  assert.equal(safeUrl(''), '');
+  assert.equal(links('https://da.live/canvas#/o/s/%E0%A4%A', 'o', 's', '/p'), false);
+});
+
+test('helpers: local date, entity decoding, HTML escaping', async () => {
+  const { localToday, escapeHtml } = await import('../tools/monday/model.js');
+  assert.equal(localToday(new Date(2026, 10, 16, 23, 30)), '2026-11-16');
+  assert.equal(titleFor('<h1>Rock &#8217;n&#8217; roll &amp;lt;3</h1>', '/x'), 'Rock ’n’ roll &lt;3');
+  assert.equal(escapeHtml('<b>"Tom" & \'Jerry\'</b>'), '&lt;b&gt;&quot;Tom&quot; &amp; &#39;Jerry&#39;&lt;/b&gt;');
 });

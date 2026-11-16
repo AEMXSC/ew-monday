@@ -43,9 +43,13 @@ export function normalizePath(path) {
 export function linksToPage(url, org, site, path) {
   if (!url) return false;
   const target = `/${org}/${site}${normalizePath(path)}`.toLowerCase();
-  const hash = url.split('#')[1] ?? '';
-  const candidate = normalizePath(decodeURIComponent(hash).replace(/\.html$/, '')).toLowerCase();
-  return candidate === target;
+  let hash;
+  try {
+    hash = decodeURIComponent(url.split('#')[1] ?? '');
+  } catch {
+    return false; // malformed link on the board: not this page
+  }
+  return normalizePath(hash.replace(/\.html$/, '')).toLowerCase() === target;
 }
 
 export function findItemForPage(items, org, site, path) {
@@ -120,8 +124,17 @@ export function decideSync(item, status, marker = {}) {
   if (!item || !status) return null;
   const newer = (a, b) => Boolean(a) && (!b || Date.parse(a) > Date.parse(b));
   const next = { previewAt: status.previewAt ?? null, liveAt: status.liveAt ?? null };
+  const notes = item.updates ?? [];
+  // Another author's browser may already have written this event back.
+  const alreadyNoted = (kind, at) => notes.some((u) => isSyncNote(u.text) && u.text.includes(kind)
+    && Date.parse(u.at) >= Date.parse(at));
+  // A preview only answers "Changes requested" if it came after the reviewer's latest comment.
+  const reviewerAt = notes.filter((u) => !isSyncNote(u.text)).map((u) => Date.parse(u.at)).filter(Boolean);
+  const answersReview = (at) => item.stage !== STAGES.CHANGES || !reviewerAt.length
+    || Date.parse(at) > Math.max(...reviewerAt);
 
-  if (newer(status.liveAt, marker.liveAt) && item.stage !== STAGES.PUBLISHED) {
+  if (newer(status.liveAt, marker.liveAt) && item.stage !== STAGES.PUBLISHED
+    && !alreadyNoted('Published', status.liveAt)) {
     return {
       stage: STAGES.PUBLISHED,
       liveUrl: status.liveUrl ?? null,
@@ -129,7 +142,8 @@ export function decideSync(item, status, marker = {}) {
       marker: next,
     };
   }
-  if (newer(status.previewAt, marker.previewAt) && OPEN_STAGES.has(item.stage)) {
+  if (newer(status.previewAt, marker.previewAt) && OPEN_STAGES.has(item.stage)
+    && answersReview(status.previewAt) && !alreadyNoted('Ready for review', status.previewAt)) {
     return {
       stage: STAGES.REVIEW,
       note: `${SYNC_PREFIX} Ready for review${status.previewUrl ? `: ${status.previewUrl}` : ''}`,
@@ -176,8 +190,33 @@ export function titleFor(html, path) {
 }
 
 function decodeEntities(s) {
-  return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
+  // &amp; last, so "&amp;lt;" stays "&lt;" instead of becoming "<".
+  return s.replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&');
+}
+
+/** Only http(s) links from the board become hrefs; anything else (javascript:, data:) is dropped. */
+export function safeUrl(url) {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : '';
+  } catch {
+    return '';
+  }
+}
+
+export function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+/** The author's local date as "YYYY-MM-DD" (UTC is a day off in the evening in the Americas). */
+export function localToday(now = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 /** No sync marker yet: the panel hasn't seen this item's page state before. */

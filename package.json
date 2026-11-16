@@ -7,9 +7,18 @@
   "license": "Apache-2.0",
   "scripts": {
     "test": "node --test test/*.test.js",
-    "seed": "node scripts/seed-board.mjs"
+    "seed": "node scripts/seed-board.mjs",
+    "lint": "npm run lint:js && npm run lint:css",
+    "lint:js": "eslint --ext .js,.mjs tools/ scripts/ test/",
+    "lint:css": "stylelint \"tools/**/*.css\""
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@adobe/eslint-config-helix": "^2.0.9",
+    "eslint": "^8.57.1",
+    "stylelint": "^16.26.1",
+    "stylelint-config-standard": "^38.0.0"
   }
 }

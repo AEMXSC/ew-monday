@@ -28,9 +28,10 @@ export function createDemoAdapter({ page } = {}) {
     ready: true,
   };
   let seq = 100;
+  const nextId = () => { seq += 1; return String(seq); };
   const pageLink = (path) => (page ? `https://da.live/canvas#/${page.org}/${page.site}${path}` : '');
   const item = (name, stage, due, brief, extra = {}) => ({
-    id: String(seq += 1),
+    id: nextId(),
     name,
     url: 'https://monday.com',
     stage,
@@ -89,7 +90,7 @@ export function createDemoAdapter({ page } = {}) {
       if (liveUrl) it.liveUrl = liveUrl;
     },
     async addNote(id, text) {
-      find(id)?.updates.unshift({ id: String(seq += 1), author: me.name, text, at: new Date().toISOString() });
+      find(id)?.updates.unshift({ id: nextId(), author: me.name, text, at: new Date().toISOString() });
     },
   };
 }

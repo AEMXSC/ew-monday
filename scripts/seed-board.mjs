@@ -53,7 +53,7 @@ const ITEMS = [
 ];
 
 async function main() {
-  const fetch = globalThis.fetch;
+  const { fetch } = globalThis;
   const api = createMondayAdapter({ token, fetch });
   const me = await api.me();
   console.log(`Signed in as ${me.name}`);
