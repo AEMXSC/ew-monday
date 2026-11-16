@@ -65,6 +65,22 @@ Workspace the same way.
 5. Send authors the [author guide](docs/authors.md). Each author pastes their
    monday.com token once and picks the board.
 
+### Optional: let the assistant talk to monday.com too
+
+The panel handles the page-to-item workflow. For questions the panel doesn't
+answer ("what's due this week across the board?", "move the gift guide to next
+Friday"), add monday.com's hosted MCP server so the Workspace assistant can use
+it. In the site config, `mcp-servers` sheet, add a row:
+
+| key | url | authHeaderName | authHeaderValue |
+|---|---|---|---|
+| monday | `https://mcp.monday.com/mcp` | `Authorization` | `Bearer {monday.com API token}` |
+
+The token in this row is shared: everyone who uses the assistant on the site
+acts as that monday.com user, and site admins can read it in the config. Use a
+dedicated service user for it, not a personal token, outside of demos. See
+[monday.com's MCP docs](https://developer.monday.com/api-reference/docs/mcp-api-token).
+
 ### Run your own copy
 
 The row above loads the code from this repository, so changes here reach your
@@ -143,8 +159,11 @@ panel can tell them from reviewers' comments.
 different stages, owned by you:
 
 ```sh
-MONDAY_TOKEN=your-token node scripts/seed-board.mjs --org aemxsc --site frescopa26 --review-page /coffee
+MONDAY_TOKEN=your-token node scripts/seed-board.mjs --org aemxsc --site frescopa26 --review-page roasts/midnight-espresso
 ```
+
+Write the page path without a leading slash on Windows: Git Bash turns
+`/roasts/...` into a `C:/Program Files/Git/...` path.
 
 `--review-page` links one item to an existing page in *Changes requested*, with
 a legal comment, so the review warning shows straight away.

@@ -4,7 +4,7 @@
  * panel: the workflow columns plus a few items in different stages.
  *
  *   MONDAY_TOKEN=... node scripts/seed-board.mjs --org aemxsc --site frescopa26 \
- *     [--name "Fréscopa content calendar"] [--review-page /coffee]
+ *     [--name "Fréscopa content calendar"] [--review-page roasts/my-page]
  *
  * --review-page links one item to an existing page in "Changes requested",
  * so the panel shows the reviewer warning straight away.
@@ -19,7 +19,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, all) =>
 
 const token = process.env.MONDAY_TOKEN;
 if (!token || !args.org || !args.site) {
-  console.error('Usage: MONDAY_TOKEN=... node scripts/seed-board.mjs --org <org> --site <site> [--name <board>] [--review-page /path]');
+  console.error('Usage: MONDAY_TOKEN=... node scripts/seed-board.mjs --org <org> --site <site> [--name <board>] [--review-page path/to/page]');
   process.exit(1);
 }
 
