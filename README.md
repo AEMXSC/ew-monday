@@ -84,13 +84,20 @@ Workspace the same way.
 The panel handles the page-to-item workflow. For questions the panel doesn't
 answer ("what's due this week across the board?", "move the gift guide to next
 Friday"), add monday.com's hosted MCP server so the Workspace assistant can use
-it. In the site config, `mcp-servers` sheet, add a row:
+it. Open the Skills editor at `https://da.live/apps/skills#/{org}/{site}`, go
+to **MCPs** and add a server:
 
-| key | url | authHeaderName | authHeaderValue |
-|---|---|---|---|
-| monday | `https://mcp.monday.com/mcp` | `Authorization` | `Bearer {monday.com API token}` |
+- **Server ID:** `monday`
+- **Endpoint URL:** `https://mcp.monday.com/mcp`
+- **HTTP header:** `Authorization` = `Bearer {monday.com API token}`
 
-The token in this row is shared: everyone who uses the assistant on the site
+The editor lists the server's tools (107 at the time of writing) once it
+connects, which confirms the token works. Then start a new chat session and ask
+"List my monday.com boards".
+
+![The monday.com MCP server in the Skills editor, with its tools listed](docs/img/mcp-skills.png)
+
+The token is shared: everyone who uses the assistant on the site
 acts as that monday.com user, and site admins can read it in the config. Use a
 dedicated service user for it, not a personal token, outside of demos. See
 [monday.com's MCP docs](https://developer.monday.com/api-reference/docs/mcp-api-token).
