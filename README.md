@@ -24,7 +24,13 @@ follow without touching the panel.
 
 This plugin is not made or endorsed by monday.com.
 
-![The panel in Experience Workspace](docs/img/panel.png)
+| In Experience Workspace | In monday.com |
+|---|---|
+| ![The panel in Experience Workspace: the page's item is in Changes requested, with Legal's comment](docs/img/panel.png) | ![The content board in monday.com: items by stage, owner and due date, with an "Edit in Workspace" link back to the page](docs/img/board.png) |
+
+The page's item, its stage and the reviewer's comment show next to the canvas.
+On the board, the **Page** column links each item back to its page in
+Workspace.
 
 This README is for site admins. For how to use the panel, see the
 [author guide](docs/authors.md).
@@ -127,7 +133,11 @@ created the first time they are used.
 | Post a comment | A monday.com update on the item. |
 
 Comments written by the panel start with `Experience Workspace ·`, so the
-panel can tell them from reviewers' comments.
+panel can tell them from reviewers' comments. Reviewers keep working where
+they already are: a comment on the item in monday.com is what the author sees
+in the panel.
+
+![A reviewer's comment on the item in monday.com](docs/img/item-updates.png)
 
 ## What data goes where
 
