@@ -1,0 +1,15 @@
+{
+  "name": "ew-monday",
+  "version": "1.0.0",
+  "description": "monday.com content workflow panel for Adobe Experience Workspace",
+  "type": "module",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "seed": "node scripts/seed-board.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

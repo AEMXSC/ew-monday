@@ -1,0 +1,13 @@
+{
+  "Title": "monday.com content workflow",
+  "Description": "Connects the page you're editing to its item on a monday.com content board: see the brief, due date and reviewer comments next to the canvas, draft from the brief with the assistant, and keep the item's stage in sync as you preview and publish. For teams that plan content in monday.com rather than Workfront.",
+  "Category": "Extension",
+  "Doc Url": "https://github.com/AEMXSC/ew-monday#readme",
+  "Try Url": "https://main--ew-monday--aemxsc.aem.page/tools/monday/monday.html?demo=1&org=aemxsc&site=frescopa26&path=/coffee",
+  "Status": "Early Access",
+  "Owner": "Courtney Remekie",
+  "Type": "Plugin",
+  "Logo": "https://main--ew-monday--aemxsc.aem.page/tools/monday/icon.svg",
+  "Image": "https://main--ew-monday--aemxsc.aem.page/marketplace/card.png",
+  "Date": "2026-11-16"
+}
