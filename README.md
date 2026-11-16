@@ -172,7 +172,7 @@ in the panel.
 different stages, owned by you:
 
 ```sh
-MONDAY_TOKEN=your-token node scripts/seed-board.mjs --org aemxsc --site frescopa26 --review-page roasts/midnight-espresso
+MONDAY_TOKEN=your-token node scripts/seed-board.mjs --org aemxsc --site frescopa26 --review-page campaigns/autumn-house-blend
 ```
 
 Write the page path without a leading slash on Windows: Git Bash turns
