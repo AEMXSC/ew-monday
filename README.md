@@ -43,6 +43,12 @@ Workspace:
 
 ![The content board in monday.com: items by stage, owner and due date, with an "Edit in Workspace" link back to the page](docs/img/board.png)
 
+A page nobody planned yet works too. **Create item from this page** adds it to
+the board, named after the page's heading and owned by the author, and comments
+posted in the panel land on the item for the team:
+
+![A blog post in Workspace with its new monday.com item in Drafting and a comment posted from the panel](docs/img/workspace-create.png)
+
 With monday.com's MCP server added ([optional](#optional-let-the-assistant-talk-to-mondaycom-too)),
 the Workspace assistant can answer questions about the board too:
 
