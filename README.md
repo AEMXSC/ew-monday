@@ -4,39 +4,56 @@ A side panel for [Adobe Experience Workspace](https://www.aem.live/docs/ew/devel
 that connects the page an author is editing to its item on a
 [monday.com](https://monday.com) content board.
 
-- **See the work behind the page.** Stage, due date, owner, the brief and the
-  review comments, next to the canvas.
-- **Draft from the brief.** One click hands the brief and the reviewers'
-  comments to the Workspace assistant. Or insert the brief into the page.
-- **Status follows the page.** Preview the page and the item moves to
-  *In review*. Publish it and the item moves to *Published*, with the live URL
-  written back. No copying links into monday.com.
-- **Review loop.** When a reviewer sets *Changes requested* in monday.com, the
-  author sees it, with the reviewer's comment, before they publish. Authors can
-  reply from the panel.
-- **My work.** Everything assigned to you on the board, overdue first, with a
-  link straight to each page.
-
-Built for teams that plan content in monday.com rather than Adobe Workfront.
-The panel talks to monday.com through a small adapter
-([see below](#other-work-management-tools)), so Wrike, Asana or Smartsheet can
-follow without touching the panel.
-
-This plugin is not made or endorsed by monday.com.
-
 ![A page open in Experience Workspace with the monday.com panel: the item is in Changes requested and Legal's comment flags the headline's claim](docs/img/workspace-review.png)
 
-The author opens the page and sees what the content team decided: the item is
-in *Changes requested*, and Legal's comment says the headline's claim has to
-go. The brief and stage are right there too.
+## The problem
+
+Many content teams plan their work in monday.com, not in Adobe Workfront: the
+briefs, the owners, the due dates and the review comments all live on a board.
+Authors then write the pages in Workspace, and the two never meet. Authors
+copy the brief across by hand, paste preview links into comments, and move
+statuses themselves. Nobody sees in Workspace that Legal asked for a change
+before the page goes live.
+
+This panel brings the board into Workspace and keeps it up to date as the
+author works.
+
+## How an author uses it
+
+1. **Open a page.** The panel shows its monday.com item: stage, due date,
+   owner, the brief and the comments. A page without an item gets **Link to an
+   existing item** or **Create item from this page**.
+2. **Draft from the brief.** **Draft with assistant** puts the brief and the
+   reviewers' comments into the Workspace assistant, ready to send. **Insert
+   brief** puts it in the page instead.
+3. **Send it for review by previewing.** Preview the page as usual: the item
+   moves to *In review*, with the preview link as a comment. Nothing to copy.
+4. **See what reviewers decided.** Reviewers keep working in monday.com. When
+   one sets *Changes requested*, the author sees a warning with the reviewer's
+   comment, like the one above, before they publish. Authors reply from the
+   panel.
+
+   ![A reviewer's comment on the item in monday.com](docs/img/item-updates.png)
+5. **Publish.** The item moves to *Published* and gets the live URL.
+6. **My work.** A second tab lists everything assigned to the author on the
+   board, overdue first, with a link to each page.
+
+On the board, the **Page** column links every item back to its page in
+Workspace:
 
 ![The content board in monday.com: items by stage, owner and due date, with an "Edit in Workspace" link back to the page](docs/img/board.png)
 
-On the board, the **Page** column links each item back to its page in
-Workspace.
+With monday.com's MCP server added ([optional](#optional-let-the-assistant-talk-to-mondaycom-too)),
+the Workspace assistant can answer questions about the board too:
 
-This README is for site admins. For how to use the panel, see the
-[author guide](docs/authors.md).
+![The Workspace assistant reading the page's item from monday.com through the MCP server](docs/img/mcp-chat.png)
+
+For teams on Wrike, Asana or Smartsheet, the panel reaches monday.com through
+one small adapter, so those tools can follow
+([see below](#other-work-management-tools)).
+
+This plugin is not made or endorsed by monday.com. The rest of this README is
+for site admins. Authors can start with the [author guide](docs/authors.md).
 
 ## Try it without an account
 
@@ -104,12 +121,12 @@ Either way, add:
 - **Header:** `Authorization` = `Bearer {monday.com API token}`, with a space
   after `Bearer`. Use **Use a secret** where it's offered.
 
-Once it connects, the server lists its tools (107 at the time of writing).
-Start a **new** chat session and ask "List my monday.com boards".
-
-![The Workspace assistant reading the page's item from monday.com through the MCP server](docs/img/mcp-chat.png)
+Once it connects, the server lists its tools (107 at the time of writing):
 
 ![The monday.com MCP server in the Skills editor, with its tools listed](docs/img/mcp-skills.png)
+
+Start a **new** chat session and ask "List my monday.com boards" or "What's on
+the page I have open?".
 
 A token in a header is shared: everyone who uses the assistant on the site
 acts as that monday.com user, and site admins can read it in the config. Use a
@@ -162,11 +179,9 @@ created the first time they are used.
 | Post a comment | A monday.com update on the item. |
 
 Comments written by the panel start with `Experience Workspace ·`, so the
-panel can tell them from reviewers' comments. Reviewers keep working where
-they already are: a comment on the item in monday.com is what the author sees
-in the panel.
-
-![A reviewer's comment on the item in monday.com](docs/img/item-updates.png)
+panel can tell them from reviewers' comments. The first time the panel sees an
+item, it takes the page's current preview and publish state as the starting
+point, so earlier previews don't change the stage.
 
 ## What data goes where
 
@@ -201,8 +216,9 @@ different stages, owned by you:
 MONDAY_TOKEN=your-token node scripts/seed-board.mjs --org aemxsc --site frescopa26 --review-page campaigns/autumn-house-blend
 ```
 
-Write the page path without a leading slash on Windows: Git Bash turns
-`/roasts/...` into a `C:/Program Files/Git/...` path.
+Write the page path without a leading slash: on Windows, Git Bash turns
+`/campaigns/...` into a `C:/Program Files/Git/...` path. The script needs
+Node.js 20 or later.
 
 `--review-page` links one item to an existing page in *Changes requested*, with
 a legal comment, so the review warning shows straight away.

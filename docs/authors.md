@@ -37,6 +37,8 @@ If a reviewer sets **Changes requested**, a red note at the top of the panel
 shows their comment. Fix the page, reply in **Comments**, and preview again: the
 item goes back to **In review**.
 
+![The panel warning that Legal asked for a change to the headline](img/workspace-review.png)
+
 You can also set the stage yourself under **Stage**.
 
 ## Publish
