@@ -57,8 +57,27 @@ test('publish gate warns by stage and surfaces the reviewer, not our sync notes'
   assert.deepEqual(publishGate(changes), { level: 'error', title: 'Changes requested', text: 'Legal: Remove the "free forever" claim.' });
   assert.equal(publishGate(item({ stage: STAGES.REVIEW })).level, 'warn');
   assert.equal(publishGate(item({ stage: STAGES.DRAFTING })).level, 'info');
-  assert.equal(publishGate(item({ stage: STAGES.APPROVED })), null);
   assert.equal(publishGate(item({ stage: STAGES.PUBLISHED })), null);
+});
+
+test('approved: ready to publish, quoting the reviewer only when theirs is the newest update', () => {
+  assert.deepEqual(publishGate(item({ stage: STAGES.APPROVED })), { level: 'success', title: 'Approved', text: 'Ready to publish.' });
+  const signedOff = item({
+    stage: STAGES.APPROVED,
+    updates: [
+      { id: '3', author: 'Legal', text: 'Looks good now.' },
+      { id: '2', author: 'Courtney', text: 'Experience Workspace · Ready for review' },
+    ],
+  });
+  assert.equal(publishGate(signedOff).text, 'Ready to publish. Legal: Looks good now.');
+  const oldRequest = item({
+    stage: STAGES.APPROVED,
+    updates: [
+      { id: '2', author: 'Courtney', text: 'Experience Workspace · Stage set to Approved' },
+      { id: '1', author: 'Legal', text: 'Remove the claim.' },
+    ],
+  });
+  assert.equal(publishGate(oldRequest).text, 'Ready to publish.', 'an older change request is not shown as the sign-off');
 });
 
 test('sync: preview moves open items to review, publish marks published, each only once', () => {

@@ -29,6 +29,7 @@ const ICONS = {
   refresh: '<svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.2 8.3A6.5 6.5 0 1 0 16 13"/><path d="M16.5 3.5v4.8h-4.8"/></svg>',
   alert: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.2 18.4 17H1.6z" fill="currentColor"/><path d="M10 7.5v4.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14.3" r="1.1" fill="#fff"/></svg>',
   info: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="currentColor"/><path d="M10 9v5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="6.2" r="1.1" fill="#fff"/></svg>',
+  check: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="currentColor"/><path d="m6.5 10.2 2.4 2.4 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   sparkle: '<svg viewBox="0 0 20 20" aria-hidden="true" fill="currentColor"><path d="M8 2.5l1.3 3.7L13 7.5l-3.7 1.3L8 12.5 6.7 8.8 3 7.5l3.7-1.3zM14.5 11l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>',
 };
 
@@ -400,7 +401,7 @@ export function mountPanel(root, {
       el('h2', {}, item.name),
       item.owners.length > 0 && el('p', { className: 'mp-fine' }, `Owner: ${item.owners.map((o) => o.name).join(', ')}`),
       gate && el('div', { className: `mp-note ${gate.level}` },
-        el('p', { className: 'mp-note-title' }, icon(gate.level === 'info' ? 'info' : 'alert'), gate.title),
+        el('p', { className: 'mp-note-title' }, icon({ info: 'info', success: 'check' }[gate.level] ?? 'alert'), gate.title),
         el('p', {}, gate.text)),
       el('div', { className: 'mp-actions' },
         item.brief && (actions.setPrompt || demo) && el('button', {

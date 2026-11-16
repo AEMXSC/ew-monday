@@ -43,8 +43,10 @@ You can also set the stage yourself under **Stage**.
 
 ## Publish
 
-Publish once the item is **Approved**. The panel warns you if it isn't, but it
-doesn't stop you. After publishing, the item moves to **Published** and gets the
+Publish once the item is **Approved**: the panel turns green and says *Ready
+to publish*, with the reviewer's comment if they left one. If your team set up
+the approval automation, monday.com also notifies you. The panel warns you if
+the item isn't approved, but it doesn't stop you. After publishing, the item moves to **Published** and gets the
 live link.
 
 The panel updates monday.com while it is open. If you publish with the panel

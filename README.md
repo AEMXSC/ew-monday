@@ -34,7 +34,9 @@ author works.
    panel.
 
    ![A reviewer's comment on the item in monday.com](docs/img/item-updates.png)
-5. **Publish.** The item moves to *Published* and gets the live URL.
+5. **Publish.** When a reviewer sets *Approved*, the panel turns green:
+   *Approved, ready to publish*, with the reviewer's sign-off comment. On
+   publish, the item moves to *Published* and gets the live URL.
 6. **My work.** A second tab lists everything assigned to the author on the
    board, overdue first, with a link to each page.
 
@@ -96,6 +98,18 @@ Workspace the same way.
    ![The monday.com panel in Workspace canvas, before connecting](docs/img/workspace-connect.png)
 5. Send authors the [author guide](docs/authors.md). Each author pastes their
    monday.com token once and picks the board.
+
+### Optional: tell authors when a page is approved
+
+The panel shows approvals while it is open. To reach the author anywhere, add
+a monday.com automation on the board (**Automate › Create automation**):
+
+> When **Content stage** changes to **Approved**, notify **Owner**: "{Item}
+> is approved and ready to publish."
+
+The author gets a monday.com notification (and email, by their settings), and
+the panel shows the green *Approved* state when they open the page. No code is
+involved: the automation is monday.com's own.
 
 ### Optional: let the assistant talk to monday.com too
 
@@ -193,6 +207,20 @@ point, so earlier previews don't change the stage.
 - If the admin status API can't be read for a site, the panel says so and
   authors set the stage by hand.
 - Tested on classic DA sites.
+- One item per page. If two items link to the same page, the panel uses the
+  first one on the board.
+
+## Roadmap
+
+- **Tasks per page.** Show the item's monday.com subitems (copy, images,
+  legal) as a checklist, each with its own owner and status, while the item
+  keeps the page's overall stage.
+- **Publish from the panel.** A **Publish** button once the item is
+  *Approved*, for authors allowed to publish.
+- **Comments on the page.** If Experience Workspace opens its comments to
+  extensions, show reviewers' monday.com comments as page comments, anchored to
+  the text they quote.
+- **Wrike, Asana and Smartsheet** adapters (see below).
 
 ## Demo board
 

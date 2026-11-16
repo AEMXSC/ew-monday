@@ -99,6 +99,12 @@ export function publishGate(item) {
   if (OPEN_STAGES.has(item.stage)) {
     return { level: 'info', title: 'Not approved yet', text: 'Preview the page to send it for review.' };
   }
+  if (item.stage === STAGES.APPROVED) {
+    // Quote the reviewer only if theirs is the newest update; an older comment may be the change request.
+    const newest = item.updates?.[0];
+    const said = newest && !isSyncNote(newest.text) ? ` ${newest.author}: ${newest.text}` : '';
+    return { level: 'success', title: 'Approved', text: `Ready to publish.${said}` };
+  }
   return null;
 }
 
