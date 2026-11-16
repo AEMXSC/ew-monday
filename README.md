@@ -76,7 +76,10 @@ Workspace the same way.
    Outline:
 
    ![The monday.com panel in Workspace canvas, before connecting](docs/img/workspace-connect.png)
-5. Send authors the [author guide](docs/authors.md). Each author pastes their
+5. Optional: to open the panel on every page instead of Workspace's default
+   panel, add `ew.canvasDefaultPanel` = `monday.com` (the library row's
+   title) to the `flags` sheet.
+6. Send authors the [author guide](docs/authors.md). Each author pastes their
    monday.com token once and picks the board.
 
 ### Optional: let the assistant talk to monday.com too
