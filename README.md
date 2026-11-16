@@ -93,44 +93,26 @@ Workspace the same way.
    Outline:
 
    ![The monday.com panel in Workspace canvas, before connecting](docs/img/workspace-connect.png)
-5. Optional: to open the panel on every page instead of Workspace's default
-   panel, add `ew.canvasDefaultPanel` = `monday.com` (the library row's
-   title) to the `flags` sheet.
-6. Send authors the [author guide](docs/authors.md). Each author pastes their
+5. Send authors the [author guide](docs/authors.md). Each author pastes their
    monday.com token once and picks the board.
 
 ### Optional: let the assistant talk to monday.com too
 
-The panel handles the page-to-item workflow. For questions the panel doesn't
-answer ("what's due this week across the board?", "move the gift guide to next
-Friday"), add monday.com's hosted MCP server so the Workspace assistant can use
-it. Where you add it depends on which assistant the site runs:
-
-- **Coworker** (`ew.coworker` = `true` in the `flags` sheet): in
-  [Experience Cloud](https://experience.adobe.com), open **Coworker ›
-  Customizations › Integrations › Add server**, in the same organization as
-  the site.
-- **Classic Workspace assistant:** open the Skills editor at
-  `https://da.live/apps/skills#/{org}/{site}` and go to **MCPs**.
-
-Either way, add:
+The panel covers the page-to-item workflow. For everything else ("what's due
+this week across the board?", "move the gift guide to next Friday"), give the
+Workspace assistant monday.com's hosted MCP server. Add it where your
+assistant's integrations are managed (for Coworker: **Customizations ›
+Integrations › Add server**):
 
 - **Name:** `monday`
 - **URL:** `https://mcp.monday.com/mcp` (HTTP)
 - **Authentication:** None
 - **Header:** `Authorization` = `Bearer {monday.com API token}`, with a space
-  after `Bearer`. Use **Use a secret** where it's offered.
+  after `Bearer`. Store it as a secret where that's offered.
 
-Once it connects, the server lists its tools (107 at the time of writing):
-
-![The monday.com MCP server in the Skills editor, with its tools listed](docs/img/mcp-skills.png)
-
-Start a **new** chat session and ask "List my monday.com boards" or "What's on
-the page I have open?".
-
-A token in a header is shared: everyone who uses the assistant on the site
-acts as that monday.com user, and site admins can read it in the config. Use a
-dedicated service user for it, not a personal token, outside of demos. See
+Then start a new chat session and ask "List my monday.com boards". Everyone
+using that integration acts as the token's monday.com user, so outside of
+demos use a dedicated service user. See
 [monday.com's MCP docs](https://developer.monday.com/api-reference/docs/mcp-api-token).
 
 ### Run your own copy
