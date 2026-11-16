@@ -67,7 +67,10 @@ Workspace the same way.
    see in the **Panels** menu.
 3. Save the config.
 4. Open a page of the site in Workspace and choose **monday.com** in the
-   **Panels** menu under Extensions.
+   **Panels** menu under Extensions. It opens as a tab next to Content and
+   Outline:
+
+   ![The monday.com panel in Workspace canvas, before connecting](docs/img/workspace-connect.png)
 5. Send authors the [author guide](docs/authors.md). Each author pastes their
    monday.com token once and picks the board.
 

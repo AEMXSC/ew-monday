@@ -10,6 +10,8 @@ it up to date as you work.
 2. In Experience Workspace, open any page and choose **monday.com** in the
    **Panels** menu.
 3. Paste the token and click **Connect**.
+
+   ![The panel in Workspace, asking for the token](img/workspace-connect.png)
 4. Pick your team's content board. The panel remembers it for the whole site.
 
 The token stays in your browser. To remove it, open **⋯** › **Disconnect
