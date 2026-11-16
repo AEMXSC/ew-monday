@@ -179,3 +179,8 @@ function decodeEntities(s) {
   return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
 }
+
+/** No sync marker yet: the panel hasn't seen this item's page state before. */
+export function isFirstSight(marker) {
+  return !marker || !('previewAt' in marker || 'liveAt' in marker);
+}

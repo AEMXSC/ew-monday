@@ -3,7 +3,7 @@
  * monday.com is ever parsed as HTML) and keeps all state in one object.
  */
 import {
-  STAGES, STAGE_ORDER, decideSync, draftPrompt, dueLabel, dueState, editUrl,
+  STAGES, STAGE_ORDER, decideSync, draftPrompt, dueLabel, dueState, editUrl, isFirstSight,
   findItemForPage, myWork, publishGate, titleFor,
 } from './model.js';
 import { createMondayAdapter } from './api.js';
@@ -154,7 +154,13 @@ export function mountPanel(root, {
 
   /** Write preview/publish events back to the item, once each. */
   async function syncFromPage(item, status, { quiet }) {
-    const decision = decideSync(item, status, storage.marker(item.id));
+    const marker = storage.marker(item.id);
+    if (status && isFirstSight(marker)) {
+      // First time this browser sees the item: earlier previews/publishes are history, not news.
+      storage.setMarker(item.id, { previewAt: status.previewAt, liveAt: status.liveAt });
+      return;
+    }
+    const decision = decideSync(item, status, marker);
     if (!decision) return;
     if (decision.stage) {
       await adapter.updateItem(state.board, item.id, { stage: decision.stage, liveUrl: decision.liveUrl });

@@ -104,3 +104,11 @@ test('new item titles come from the page h1, else the path', () => {
   assert.equal(titleFor('', '/campaigns/holiday-gift-guide'), 'Holiday Gift Guide');
   assert.equal(titleFor('', '/index'), 'Home');
 });
+
+test('first sight: an item never synced before has no marker; one synced (even to nulls) has', async () => {
+  const { isFirstSight } = await import('../tools/monday/model.js');
+  assert.equal(isFirstSight({}), true);
+  assert.equal(isFirstSight(null), true);
+  assert.equal(isFirstSight({ previewAt: null, liveAt: null }), false);
+  assert.equal(isFirstSight({ previewAt: '2026-11-16T10:00:00.000Z' }), false);
+});
