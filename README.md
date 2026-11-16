@@ -24,11 +24,14 @@ follow without touching the panel.
 
 This plugin is not made or endorsed by monday.com.
 
-| In Experience Workspace | In monday.com |
-|---|---|
-| ![The panel in Experience Workspace: the page's item is in Changes requested, with Legal's comment](docs/img/panel.png) | ![The content board in monday.com: items by stage, owner and due date, with an "Edit in Workspace" link back to the page](docs/img/board.png) |
+![A page open in Experience Workspace with the monday.com panel: the item is in Changes requested and Legal's comment flags the headline's claim](docs/img/workspace-review.png)
 
-The page's item, its stage and the reviewer's comment show next to the canvas.
+The author opens the page and sees what the content team decided: the item is
+in *Changes requested*, and Legal's comment says the headline's claim has to
+go. The brief and stage are right there too.
+
+![The content board in monday.com: items by stage, owner and due date, with an "Edit in Workspace" link back to the page](docs/img/board.png)
+
 On the board, the **Page** column links each item back to its page in
 Workspace.
 
@@ -37,11 +40,13 @@ This README is for site admins. For how to use the panel, see the
 
 ## Try it without an account
 
-[Open the demo](https://main--ew-monday--aemxsc.aem.page/tools/monday/monday.html?demo=1&org=aemxsc&site=frescopa26&path=/coffee):
+[Open the demo](https://main--ew-monday--aemxsc.aem.page/tools/monday/monday.html?demo=1&org=aemxsc&site=frescopa26&path=/campaigns/autumn-house-blend):
 sample Fréscopa board data, nothing leaves the browser. Buttons at the bottom
 simulate previewing and publishing the page so you can watch the item move
 through the stages. Add `?demo=1` to the library `path` to try it inside
 Workspace the same way.
+
+<img src="docs/img/panel.png" alt="The panel in demo mode" width="380">
 
 ## Before you start
 
