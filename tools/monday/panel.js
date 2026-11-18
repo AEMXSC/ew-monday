@@ -22,26 +22,25 @@ const STAGE_DOTS = {
   [STAGES.PUBLISHED]: 'var(--s2-green-1000, #03714a)',
 };
 const HEX_COLOR = /^#[0-9a-f]{3,8}$/i;
-/** The same colours as plain values: the picker draws swatches inside its own shadow DOM. */
-const STAGE_SWATCHES = {
-  [STAGES.BRIEF]: '#b130bd',
-  [STAGES.DRAFTING]: '#3b63fb',
-  [STAGES.REVIEW]: '#e86a00',
-  [STAGES.CHANGES]: '#d73220',
-  [STAGES.APPROVED]: '#0ba45d',
-  [STAGES.PUBLISHED]: '#03714a',
-};
 
 /** S2 workflow icons, copied into ./img/icons: the folder the shared components read too (codeBase). */
 export const CODE_BASE = new URL('.', import.meta.url).href.replace(/\/$/, '');
 const ICONS = {
-  more: 'more', refresh: 'refresh', alert: 'alertdiamond', info: 'infocircle', check: 'checkmarkcircle', sparkle: 'aigenerate', open: 'openin', send: 'send', add: 'add', link: 'link',
+  more: 'more', refresh: 'refresh', alert: 'alertdiamond', info: 'infocircle', check: 'checkmarkcircle', sparkle: 'aigenerate', open: 'openin', send: 'send', add: 'add',
 };
 
+const SVG = 'http://www.w3.org/2000/svg';
+
 function icon(name) {
+  const svg = document.createElementNS(SVG, 'svg');
+  svg.setAttribute('viewBox', '0 0 20 20');
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS(SVG, 'use');
+  use.setAttribute('href', `${CODE_BASE}/img/icons/s2-icon-${ICONS[name]}-20-n.svg#icon`);
+  svg.append(use);
   const span = document.createElement('span');
   span.className = 'mp-icon';
-  span.innerHTML = `<svg viewBox="0 0 20 20" aria-hidden="true"><use href="${CODE_BASE}/img/icons/s2-icon-${ICONS[name]}-20-n.svg#icon"></use></svg>`;
+  span.append(svg);
   return span;
 }
 
@@ -100,6 +99,7 @@ export function mountPanel(root, {
   let refreshSeq = 0;
   let lastSnapshot = '';
   let syncing = false;
+  let renderRetry = null;
 
   const set = (patch) => { Object.assign(state, patch); render(); };
   const flash = (level, text) => {
@@ -109,6 +109,7 @@ export function mountPanel(root, {
   };
 
   function signOut(message) {
+    refreshSeq += 1; // a read still in flight must not land on the next account or board
     clearTimeout(pollTimer);
     storage.setToken(null);
     adapter = null;
@@ -135,13 +136,21 @@ export function mountPanel(root, {
     const token = storage.token();
     if (!token) { set({ view: 'connect' }); return; }
     adapter = adapterFactory({ token });
+    let failure = '';
     await guard('Connecting', async () => {
-      const me = await adapter.me();
-      set({ me });
-      const boardId = storage.board(page.org, page.site);
-      if (boardId) await openBoard(boardId);
-      else await listBoards();
+      try {
+        const me = await adapter.me();
+        set({ me });
+        const boardId = storage.board(page.org, page.site);
+        if (boardId) await openBoard(boardId);
+        else await listBoards();
+      } catch (e) {
+        failure = e.message;
+        throw e;
+      }
     });
+    // Still on "Loading…" (network or monday.com down): say so and offer a retry.
+    if (state.view === 'loading') set({ view: 'error', error: failure || 'Couldn\'t reach monday.com.' });
   }
 
   async function connect(token) {
@@ -170,6 +179,7 @@ export function mountPanel(root, {
       throw e;
     }
     storage.setBoard(page.org, page.site, board.id);
+    refreshSeq += 1; // drop reads of the previous board
     if (!board.ready) { set({ board, view: 'setup' }); return; }
     set({ board, view: 'main' });
     schedulePoll(); // before the first read, so one failure doesn't stop syncing for good
@@ -180,7 +190,8 @@ export function mountPanel(root, {
     refreshSeq += 1;
     const seq = refreshSeq;
     const [items, status] = await Promise.all([adapter.items(state.board), page.status()]);
-    if (seq !== refreshSeq) return; // a newer read finished first: don't show older data
+    // A newer read finished first, or the author disconnected / switched board: don't use this one.
+    if (seq !== refreshSeq || !adapter) return;
     const item = findItemForPage(items, page.org, page.site, page.path);
     const snapshot = JSON.stringify({ items, status });
     if (!quiet || snapshot !== lastSnapshot) {
@@ -201,16 +212,29 @@ export function mountPanel(root, {
     }
     const decision = decideSync(item, status, marker);
     if (!decision) return;
-    // Remember the event before writing: a failed write is reported, never retried into duplicates.
+    // Remember the event before writing, so it is never written twice.
     storage.setMarker(item.id, decision.marker);
     if (!decision.stage) return;
     syncing = true;
     try {
-      await adapter.addNote(item.id, decision.note);
-      await adapter.updateItem(state.board, item.id, { stage: decision.stage, liveUrl: decision.liveUrl });
+      // Stage first: if it fails nothing was written, so forget the event and retry on the next read.
+      try {
+        await adapter.updateItem(state.board, item.id, { stage: decision.stage, liveUrl: decision.liveUrl });
+      } catch (e) {
+        storage.setMarker(item.id, marker);
+        throw e;
+      }
+      try {
+        await adapter.addNote(item.id, decision.note);
+      } catch (e) {
+        flash('error', `The stage was updated, but the comment couldn't be posted: ${e.message}`);
+      }
       // Re-read so stage colours and the new comment come from the board itself.
       await refresh({ quiet: true });
       flash('success', `monday.com updated: ${decision.stage}${quiet ? ' (page state changed)' : ''}`);
+    } catch (e) {
+      if (e.code === 'unauthorized') throw e;
+      flash('error', `Couldn't update monday.com: ${e.message}. It will try again.`);
     } finally {
       syncing = false;
     }
@@ -300,6 +324,7 @@ export function mountPanel(root, {
   }
 
   function disconnect() {
+    refreshSeq += 1;
     clearTimeout(pollTimer);
     storage.clear();
     adapter = null;
@@ -326,7 +351,7 @@ export function mountPanel(root, {
         key: 'menu',
         props: {
           items: [
-            state.board && { id: 'board', label: 'Open board in monday.com', icon: 'openin' },
+            safeUrl(state.board?.url) && { id: 'board', label: 'Open board in monday.com', icon: 'openin' },
             { id: 'switch', label: 'Switch board' },
             { divider: true },
             { id: 'disconnect', label: 'Disconnect monday.com' },
@@ -366,6 +391,18 @@ export function mountPanel(root, {
         'In monday.com: your avatar › Developers › My access tokens. ',
         external(TOKEN_HELP, 'How to find it'),
         '. The token stays in this browser and is only sent to monday.com.'));
+  }
+
+  /** Errors that stop the panel (outside Workspace, monday.com unreachable), with a way forward. */
+  function errorView() {
+    const connected = Boolean(storage.token());
+    return el('section', { className: 'mp-card' },
+      el('p', { className: 'mp-note error', role: 'alert' }, state.error),
+      connected && el('div', { className: 'mp-actions' },
+        el('button', {
+          type: 'button', className: 'nx-btn-accent', key: 'retry', onClick: () => { set({ view: 'loading' }); start(); },
+        }, icon('refresh'), 'Try again'),
+        el('button', { type: 'button', className: 'nx-action-btn', key: 'disconnect', onClick: disconnect }, 'Disconnect monday.com')));
   }
 
   function boardsView() {
@@ -444,13 +481,17 @@ export function mountPanel(root, {
         size: 'm',
         placeholder: 'Set the stage',
         'aria-labelledby': 'mp-stage-label',
-        disabled: Boolean(state.busy),
         props: {
-          items: STAGE_ORDER.map((s) => ({ value: s, label: s, swatch: STAGE_SWATCHES[s] })),
+          items: STAGE_ORDER.map((s) => ({ value: s, label: s, swatch: STAGE_DOTS[s] })),
           value: STAGE_ORDER.includes(item.stage) ? item.stage : '',
         },
         // After the picker has closed: setStage re-renders the panel and removes the picker.
-        onChange: (e) => e.detail.value !== item.stage && setTimeout(() => setStage(e.detail.value)),
+        // The picker can't be disabled, so a change while busy is undone (re-render) and explained.
+        onChange: (e) => {
+          if (e.detail.value === item.stage) return;
+          if (state.busy) { setTimeout(() => flash('warn', `${state.busy}… Try again in a moment.`)); return; }
+          setTimeout(() => setStage(e.detail.value));
+        },
       }),
       el('p', { className: 'mp-fine' }, syncLine()));
   }
@@ -601,7 +642,19 @@ export function mountPanel(root, {
           el('button', { type: 'button', className: 'nx-action-btn', disabled: Boolean(state.busy), onClick: () => simulate('live') }, 'Publish the page'))));
   }
 
+  /** True while a shared picker or menu has its popover open: rebuilding would destroy it mid-choice. */
+  function popoverOpen() {
+    return [...root.querySelectorAll('nx-picker, nx-menu')]
+      .some((p) => p.open || p.shadowRoot?.querySelector('[aria-expanded="true"]'));
+  }
+
   function render() {
+    if (popoverOpen()) {
+      // Try again shortly; the newest state is rendered once the popover closes.
+      clearTimeout(renderRetry);
+      renderRetry = setTimeout(render, 300);
+      return;
+    }
     // Everything is rebuilt, so carry focus (and the caret) over by key.
     const active = document.activeElement;
     const focusKey = root.contains(active) ? active.dataset.key : '';
@@ -613,7 +666,7 @@ export function mountPanel(root, {
       boards: boardsView,
       setup: setupView,
       main: mainView,
-    }[state.view]?.() ?? el('p', { role: 'alert' }, state.error);
+    }[state.view]?.() ?? errorView();
     root.replaceChildren(...[
       header(),
       !embedded && !demo && el('p', { className: 'mp-note info' }, `Standalone mode: ${page.org}/${page.site}${page.path}. Insert and assistant actions need Experience Workspace.`),
