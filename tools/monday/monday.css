@@ -56,26 +56,7 @@ body {
 .mp-icon svg:not([fill]) { fill: currentcolor; }
 
 .mp-actions a { text-decoration: none; }
-
-.mp-menu { position: relative; }
-.mp-menu summary { list-style: none; }
-.mp-menu summary::-webkit-details-marker { display: none; }
-.mp-menu[open] summary { background: var(--s2-gray-200, #e1e1e1); }
-
-.mp-menu-list {
-  position: absolute; right: 0; top: 38px; z-index: 5; min-width: 220px; padding: 6px;
-  display: flex; flex-direction: column;
-  background: var(--s2-gray-25, #fff);
-  border-radius: var(--s2-corner-radius-700, 10px);
-  box-shadow: 0 1px 4px rgb(0 0 0 / 15%), 0 8px 24px rgb(0 0 0 / 12%);
-}
-
-.mp-menu-list a, .mp-menu-list button {
-  padding: 7px 10px; border: 0; background: none; text-align: left; cursor: pointer;
-  border-radius: var(--s2-corner-radius-500, 8px);
-  font: inherit; color: var(--s2-gray-800, #292929); text-decoration: none;
-}
-.mp-menu-list a:hover, .mp-menu-list button:hover { background: var(--s2-gray-100, #e9e9e9); }
+.mp nx-picker { display: block; margin-bottom: var(--s2-spacing-200, 12px); }
 
 /* Cards: S2 large corner radius on a hairline border. */
 .mp-card {
@@ -122,11 +103,6 @@ body {
 
 /* Buttons come from nx2 buttons.css; only the panel-specific states live here. */
 .mp .nx-btn-accent .mp-icon, .mp .nx-action-btn .mp-icon { width: 18px; height: 18px; }
-.mp-stages { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--s2-spacing-200, 12px); }
-.mp-stages .nx-action-btn { background: var(--s2-gray-100, #e9e9e9); }
-
-.mp-stages .nx-action-btn.on,
-.mp-stages .nx-action-btn.on:hover { background: var(--s2-gray-800, #292929); color: var(--s2-gray-25, #fff); }
 
 /* Fields */
 .mp-connect form { display: flex; flex-direction: column; gap: 8px; margin: var(--s2-spacing-300, 16px) 0; }

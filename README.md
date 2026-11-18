@@ -192,9 +192,12 @@ point, so earlier previews don't change the stage.
   (`admin.hlx.page/status`) and its heading (`admin.da.live/source`). The panel
   never changes the page, except when the author clicks **Insert brief**.
 - **The panel page** has a Content Security Policy: scripts and styles only from
-  its own site and `da.live` (the Workspace SDK and style guide), network only to
-  `api.monday.com`, `admin.hlx.page` and `admin.da.live`. Links from the board
-  open only if they are `http(s)`.
+  its own site and `da.live` (the Workspace SDK, style guide and shared
+  components), network only to `da.live`, `api.monday.com`, `admin.hlx.page` and
+  `admin.da.live`. Links from the board open only if they are `http(s)`.
+- **Look and feel:** the panel uses Experience Workspace's own Spectrum 2 style
+  guide and shared components (`nx-picker`, `nx-menu`) and S2 icons, loaded the
+  way [adobe-rnd/ew-extensions](https://github.com/adobe-rnd/ew-extensions) does.
 
 ## Limits
 

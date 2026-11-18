@@ -39,7 +39,7 @@ item goes back to **In review**.
 
 ![The panel warning that Legal asked for a change to the headline](img/workspace-review.png)
 
-You can also set the stage yourself under **Stage**.
+You can also set the stage yourself in the **Stage** picker.
 
 ## Publish
 

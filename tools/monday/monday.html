@@ -4,10 +4,13 @@
     <meta charset="utf-8">
     <title>Content workflow · monday.com</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <!-- Scripts and styles only from this site and da.live (SDK, style guide); network only to
-         monday.com and Adobe's admin APIs. No inline script or style attributes. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://da.live; style-src 'self' https://da.live; font-src https://da.live; img-src 'self' https://da.live data:; connect-src https://api.monday.com https://admin.hlx.page https://admin.da.live; base-uri 'none'; form-action 'none'; object-src 'none'">
+    <!-- Scripts and styles only from this site and da.live (SDK, style guide, shared components); network
+         only to monday.com and Adobe's admin APIs. The one inline script is the import map below, allowed
+         by its hash: change it and the hash must change. Inline style attributes are allowed only for the
+         shared picker's colour swatches; <style> blocks and inline scripts stay blocked. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://da.live 'sha256-ULv3vloPFudIaT9IHATtMFsFCdagPJNQM8hwIFl46Ho='; style-src 'self' https://da.live; style-src-attr 'unsafe-inline'; font-src https://da.live; img-src 'self' https://da.live data:; connect-src https://da.live https://api.monday.com https://admin.hlx.page https://admin.da.live; base-uri 'none'; form-action 'none'; object-src 'none'">
     <link rel="icon" href="data:,">
+    <script type="importmap">{ "imports": { "da-lit": "https://da.live/deps/lit/dist/index.js" } }</script>
     <script src="https://da.live/nx/utils/sdk.js" type="module"></script>
     <!-- Experience Workspace style guide: Spectrum 2 tokens, Adobe Clean, buttons, fields -->
     <link rel="stylesheet" href="https://da.live/nx2/styles/styles.css"/>

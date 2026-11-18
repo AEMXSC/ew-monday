@@ -22,21 +22,26 @@ const STAGE_DOTS = {
   [STAGES.PUBLISHED]: 'var(--s2-green-1000, #03714a)',
 };
 const HEX_COLOR = /^#[0-9a-f]{3,8}$/i;
+/** The same colours as plain values: the picker draws swatches inside its own shadow DOM. */
+const STAGE_SWATCHES = {
+  [STAGES.BRIEF]: '#b130bd',
+  [STAGES.DRAFTING]: '#3b63fb',
+  [STAGES.REVIEW]: '#e86a00',
+  [STAGES.CHANGES]: '#d73220',
+  [STAGES.APPROVED]: '#0ba45d',
+  [STAGES.PUBLISHED]: '#03714a',
+};
 
-/** Spectrum 2 workflow icons (18px), trusted constants only. */
+/** S2 workflow icons, copied into ./img/icons: the folder the shared components read too (codeBase). */
+export const CODE_BASE = new URL('.', import.meta.url).href.replace(/\/$/, '');
 const ICONS = {
-  more: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="4" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="16" cy="10" r="1.6"/></svg>',
-  refresh: '<svg viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16.2 8.3A6.5 6.5 0 1 0 16 13"/><path d="M16.5 3.5v4.8h-4.8"/></svg>',
-  alert: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.2 18.4 17H1.6z" fill="currentColor"/><path d="M10 7.5v4.2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14.3" r="1.1" fill="#fff"/></svg>',
-  info: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="currentColor"/><path d="M10 9v5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="6.2" r="1.1" fill="#fff"/></svg>',
-  check: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="currentColor"/><path d="m6.5 10.2 2.4 2.4 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  sparkle: '<svg viewBox="0 0 20 20" aria-hidden="true" fill="currentColor"><path d="M8 2.5l1.3 3.7L13 7.5l-3.7 1.3L8 12.5 6.7 8.8 3 7.5l3.7-1.3zM14.5 11l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>',
+  more: 'more', refresh: 'refresh', alert: 'alertdiamond', info: 'infocircle', check: 'checkmarkcircle', sparkle: 'aigenerate', open: 'openin', send: 'send', add: 'add', link: 'link',
 };
 
 function icon(name) {
   const span = document.createElement('span');
   span.className = 'mp-icon';
-  span.innerHTML = ICONS[name];
+  span.innerHTML = `<svg viewBox="0 0 20 20" aria-hidden="true"><use href="${CODE_BASE}/img/icons/s2-icon-${ICONS[name]}-20-n.svg#icon"></use></svg>`;
   return span;
 }
 
@@ -51,6 +56,7 @@ export function el(tag, props = {}, ...children) {
     if (k === 'className') node.className = v;
     else if (k === 'key') node.dataset.key = v;
     else if (k === 'href') node.setAttribute('href', safeUrl(v) || '#');
+    else if (k === 'props') Object.assign(node, v); // shared components take items/value as properties
     else if (k.startsWith('on')) node.addEventListener(k.slice(2).toLowerCase(), v);
     else node.setAttribute(k, v === true ? '' : v);
   });
@@ -316,12 +322,25 @@ export function mountPanel(root, {
         el('div', {},
           el('h1', { className: 'mp-title' }, 'Content workflow'),
           el('span', { className: 'mp-sub' }, state.board ? state.board.name : 'monday.com'))),
-      state.me && el('details', { className: 'mp-menu' },
-        el('summary', { 'aria-label': 'More', className: 'nx-action-btn-icon', key: 'menu' }, icon('more')),
-        el('div', { className: 'mp-menu-list' },
-          state.board && external(state.board.url, 'Open board in monday.com'),
-          el('button', { type: 'button', onClick: () => guard('Loading boards', listBoards) }, 'Switch board'),
-          el('button', { type: 'button', onClick: disconnect }, 'Disconnect monday.com'))));
+      state.me && el('nx-menu', {
+        key: 'menu',
+        props: {
+          items: [
+            state.board && { id: 'board', label: 'Open board in monday.com', icon: 'openin' },
+            { id: 'switch', label: 'Switch board' },
+            { divider: true },
+            { id: 'disconnect', label: 'Disconnect monday.com' },
+          ].filter(Boolean),
+        },
+        // After the menu has closed: these re-render the panel and remove the menu.
+        onSelect: (e) => setTimeout(() => ({
+          board: () => window.open(safeUrl(state.board.url), '_blank', 'noopener,noreferrer'),
+          switch: () => guard('Loading boards', listBoards),
+          disconnect,
+        }[e.detail.id]?.())),
+      }, el('button', {
+        type: 'button', slot: 'trigger', className: 'nx-action-btn-icon', 'aria-label': 'More', title: 'More',
+      }, icon('more'))));
   }
 
   function connectView() {
@@ -410,21 +429,29 @@ export function mountPanel(root, {
         item.brief && actions.sendHTML && el('button', {
           type: 'button', className: 'nx-action-btn', key: 'insert', onClick: () => insertBrief(item),
         }, 'Insert brief'),
-        external(item.url, 'Open item', { className: 'nx-action-btn' })));
+        el('a', {
+          className: 'nx-action-btn', href: item.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': 'Open item (opens in a new tab)',
+        }, icon('open'), 'Open item')));
   }
 
   function stageCard(item) {
     return el('section', { className: 'mp-card' },
-      el('h3', {}, 'Stage'),
-      el('div', { className: 'mp-stages', role: 'group', 'aria-label': 'Content stage' },
-        STAGE_ORDER.map((s) => el('button', {
-          type: 'button',
-          key: `stage-${s}`,
-          className: `nx-action-btn nx-btn-sm${s === item.stage ? ' on' : ''}`,
-          'aria-pressed': String(s === item.stage),
-          disabled: Boolean(state.busy),
-          onClick: () => s !== item.stage && setStage(s),
-        }, s))),
+      el('h3', { id: 'mp-stage-label' }, 'Stage'),
+      // nx-picker with the stage colours as swatches (S2 status-light colours).
+      el('nx-picker', {
+        key: 'stage',
+        variant: 'field',
+        size: 'm',
+        placeholder: 'Set the stage',
+        'aria-labelledby': 'mp-stage-label',
+        disabled: Boolean(state.busy),
+        props: {
+          items: STAGE_ORDER.map((s) => ({ value: s, label: s, swatch: STAGE_SWATCHES[s] })),
+          value: STAGE_ORDER.includes(item.stage) ? item.stage : '',
+        },
+        // After the picker has closed: setStage re-renders the panel and removes the picker.
+        onChange: (e) => e.detail.value !== item.stage && setTimeout(() => setStage(e.detail.value)),
+      }),
       el('p', { className: 'mp-fine' }, syncLine()));
   }
 
@@ -447,7 +474,7 @@ export function mountPanel(root, {
         : el('p', { className: 'mp-fine' }, 'No comments yet.'),
       el('form', { className: 'mp-comment', onSubmit: (e) => { e.preventDefault(); comment(); } },
         textarea,
-        el('button', { type: 'submit', className: 'nx-action-btn', key: 'post', disabled: Boolean(state.busy) }, 'Post')));
+        el('button', { type: 'submit', className: 'nx-action-btn', key: 'post', disabled: Boolean(state.busy) }, icon('send'), 'Post')));
   }
 
   function pageTab() {
@@ -488,7 +515,7 @@ export function mountPanel(root, {
             el('p', {}, 'Link it to an item on the board, or create one from this page.'),
             el('button', {
               type: 'button', className: 'nx-btn-accent', key: 'create', disabled: Boolean(state.busy), onClick: createItem,
-            }, state.busy === 'Creating' ? 'Creating…' : 'Create item from this page'),
+            }, icon('add'), state.busy === 'Creating' ? 'Creating…' : 'Create item from this page'),
           ]),
       el('section', { className: 'mp-card' },
         el('h3', {}, 'Link to an existing item'),
