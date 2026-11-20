@@ -3,7 +3,7 @@
  * monday.com is ever parsed as HTML) and keeps all state in one object.
  */
 import {
-  STAGES, STAGE_ORDER, decideSync, draftPrompt, dueLabel, dueState, editUrl, escapeHtml, findItemForPage,
+  STAGES, STAGE_ORDER, canvasHash, decideSync, draftPrompt, dueLabel, dueState, editUrl, escapeHtml, findItemForPage,
   isFirstSight, isSyncNote, localToday, myWork, publishGate, safeUrl, SYNC_PREFIX, titleFor,
 } from './model.js';
 import { MAX_ITEMS, createMondayAdapter } from './api.js';
@@ -575,17 +575,29 @@ export function mountPanel(root, {
     if (!mine.length) return el('section', { className: 'mp-card' }, el('p', {}, 'Nothing assigned to you on this board. Nice.'));
     return el('section', { className: 'mp-card' },
       el('h3', {}, `Assigned to you (${mine.length})`),
-      el('ul', { className: 'mp-list' }, mine.map((i) => el('li', {},
-        el('a', {
-          className: 'mp-row',
-          key: `work-${i.id}`,
-          href: i.pageUrl || i.url,
-          target: '_blank',
-          rel: 'noopener noreferrer',
-        },
-        el('span', { className: 'mp-row-name' }, i.name),
-        el('span', { className: 'mp-row-meta' }, stagePill(i), dueChip(i),
-          el('span', { className: 'mp-fine' }, i.pageUrl ? 'Open page (new tab)' : 'Open item (new tab)')))))));
+      el('ul', { className: 'mp-list' }, mine.map((i) => {
+        // A page opens in this Workspace window, so the panel stays open and follows it.
+        // Ctrl/Cmd/Shift or middle click still open a new tab from the href.
+        const hash = actions.setHash && canvasHash(i.pageUrl);
+        let where = 'Open item (new tab)';
+        if (i.pageUrl) where = hash ? 'Open page' : 'Open page (new tab)';
+        return el('li', {},
+          el('a', {
+            className: 'mp-row',
+            key: `work-${i.id}`,
+            href: i.pageUrl || i.url,
+            target: hash ? undefined : '_blank',
+            rel: 'noopener noreferrer',
+            onClick: hash ? (e) => {
+              if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+              e.preventDefault();
+              actions.setHash(hash);
+            } : undefined,
+          },
+          el('span', { className: 'mp-row-name' }, i.name),
+          el('span', { className: 'mp-row-meta' }, stagePill(i), dueChip(i),
+            el('span', { className: 'mp-fine' }, where))));
+      })));
   }
 
   /** WAI-ARIA tabs: roving tabindex, arrow keys, Home and End. */

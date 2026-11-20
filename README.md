@@ -38,7 +38,8 @@ author works.
    *Approved, ready to publish*, with the reviewer's sign-off comment. On
    publish, the item moves to *Published* and gets the live URL.
 6. **My work.** A second tab lists everything assigned to the author on the
-   board, overdue first, with a link to each page.
+   board, overdue first. Click one to open its page in the same Workspace
+   window; the panel stays open and shows that page's item.
 
 On the board, the **Page** column links every item back to its page in
 Workspace:
