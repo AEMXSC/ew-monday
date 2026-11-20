@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  STAGES, decideSync, draftPrompt, dueLabel, dueState, editUrl, findItemForPage,
+  STAGES, canvasHash, decideSync, draftPrompt, dueLabel, dueState, editUrl, findItemForPage,
   linksToPage, myWork, publishGate, titleFor, webPath,
 } from '../tools/monday/model.js';
 
@@ -182,4 +182,13 @@ test('helpers: local date, entity decoding, HTML escaping', async () => {
   assert.equal(localToday(new Date(2026, 10, 16, 23, 30)), '2026-11-16');
   assert.equal(titleFor('<h1>Rock &#8217;n&#8217; roll &amp;lt;3</h1>', '/x'), 'Rock ’n’ roll &lt;3');
   assert.equal(escapeHtml('<b>"Tom" & \'Jerry\'</b>'), '&lt;b&gt;&quot;Tom&quot; &amp; &#39;Jerry&#39;&lt;/b&gt;');
+});
+
+test('canvas hash: the Workspace address of a page link, nothing for other links', () => {
+  assert.equal(canvasHash(editUrl('aemxsc', 'frescopa26', '/campaigns/tour')), '#/aemxsc/frescopa26/campaigns/tour');
+  assert.equal(canvasHash('https://acme.monday.com/boards/1/pulses/2'), '');
+  assert.equal(canvasHash('https://da.live/#/aemxsc/frescopa26/tour'), '', 'only the canvas');
+  assert.equal(canvasHash('https://evil.example/canvas#/a/b/c'), '');
+  assert.equal(canvasHash(''), '');
+  assert.equal(canvasHash(undefined), '');
 });

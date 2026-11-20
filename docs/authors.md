@@ -55,4 +55,6 @@ closed, the item updates the next time someone opens the panel on that page.
 ## My work
 
 The **My work** tab lists the items assigned to you that aren't published yet,
-soonest due first. Overdue items are red. Click one to open its page.
+soonest due first. Overdue items are red. Click one to open its page in the
+same window: the panel stays open and switches to that page's item.
+Ctrl-click (Cmd-click on a Mac) opens the page in a new tab instead.

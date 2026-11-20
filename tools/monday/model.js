@@ -26,6 +26,19 @@ export function editUrl(org, site, path) {
   return `https://da.live/canvas#/${org}/${site}${normalizePath(path)}`;
 }
 
+/**
+ * The Workspace hash ("#/org/site/path") of a canvas edit URL, so the panel can open the page in
+ * the same window (SDK setHash) and stay open. '' for anything that isn't a da.live canvas URL.
+ */
+export function canvasHash(url) {
+  try {
+    const u = new URL(url);
+    return u.origin === 'https://da.live' && u.pathname === '/canvas' && /^#\/[^/]+\/[^/]+/.test(u.hash) ? u.hash : '';
+  } catch {
+    return '';
+  }
+}
+
 /** "/index" and "" become "/"; strips ".html" and trailing slashes elsewhere. */
 export function webPath(path) {
   const p = normalizePath(path).replace(/\.html$/, '');
